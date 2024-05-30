@@ -8,10 +8,11 @@ def parameters():
 
     # These are usually set from outside
     params.debug = 0                        # Debug level
+    params.device = 'cpu'
     params.visualization = False            # Do visualization
 
     # Use GPU or not (IoUNet requires this to be True)
-    params.use_gpu = True
+    params.use_gpu = False
 
     # Feature specific parameters
     deep_params = TrackerParams()
@@ -85,7 +86,7 @@ def parameters():
     params.update_scale_when_uncertain = True   # Update scale or not if distractor is close
 
     # IoUNet parameters
-    params.use_iou_net = True               # Use IoU net or not
+    params.use_iou_net = False               # Use IoU net or not
     params.iounet_augmentation = False      # Use the augmented samples to compute the modulation vector
     params.iounet_k = 3                     # Top-k average to estimate final box
     params.num_init_random_boxes = 9        # Num extra random boxes in addition to the classifier prediction

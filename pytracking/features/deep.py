@@ -165,7 +165,7 @@ class ATOMResNet18(MultiFeatureBase):
         super().__init__(*args, **kwargs)
 
         self.output_layers = list(output_layers)
-        self.use_gpu = use_gpu
+        self.use_gpu = False
         self.net_path = net_path
 
     def initialize(self):

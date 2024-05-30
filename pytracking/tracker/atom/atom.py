@@ -28,8 +28,10 @@ class ATOM(BaseTracker):
 
         # Initialize some stuff
         self.frame_num = 1
-        if not self.params.has('device'):
-            self.params.device = 'cuda' if self.params.use_gpu else 'cpu'
+        # if not self.params.has('device'):
+        #     self.params.device = 'cuda' if self.params.use_gpu else 'cpu'
+        self.params.use_gpu = False
+        self.params.device = 'cpu'
 
         # Initialize features
         self.initialize_features()
