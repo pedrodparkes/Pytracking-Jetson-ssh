@@ -1,0 +1,48 @@
+/usr/local/cuda-11.4/bin/nvcc  \
+  -DTORCH_EXTENSION_NAME=_prroi_pooling \
+  -DTORCH_API_INCLUDE_EXTENSION_H \
+  -DPYBIND11_COMPILER_TYPE=\"_gcc\" \
+  -DPYBIND11_STDLIB=\"_libstdcpp\" \
+  -DPYBIND11_BUILD_ABI=\"_cxxabi1013\" \
+  -isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include \
+  -isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/torch/csrc/api/include \
+  -isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/TH \
+  -isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/THC \
+  -isystem /usr/local/cuda-11.4/include \
+  -isystem /home/pedro/anaconda3/envs/pytracking-3.8/include/python3.8 \
+  -D_GLIBCXX_USE_CXX11_ABI=1 \
+  -D__CUDA_NO_HALF_OPERATORS__ \
+  -D__CUDA_NO_HALF_CONVERSIONS__ \
+  -D__CUDA_NO_BFLOAT16_CONVERSIONS__ \
+  -D__CUDA_NO_HALF2_OPERATORS__ \
+  --expt-relaxed-constexpr \
+  -gencode=arch=compute_87,code=compute_87 \
+  -gencode=arch=compute_87,code=sm_87 \
+  --compiler-options '-fPIC' \
+  -std=c++17 \
+  -c /home/pedro/Pytracking-Jetson-ssh/ltr/external/PreciseRoIPooling/pytorch/prroi_pool/src/prroi_pooling_gpu_impl.cu \
+  -o prroi_pooling_gpu_impl.cuda.o
+
+/usr/local/cuda/bin/nvcc  \
+-DTORCH_EXTENSION_NAME=_prroi_pooling \
+-DTORCH_API_INCLUDE_EXTENSION_H \
+-DPYBIND11_COMPILER_TYPE=\"_gcc\" \
+-DPYBIND11_STDLIB=\"_libstdcpp\" \
+-DPYBIND11_BUILD_ABI=\"_cxxabi1013\" \
+-isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include \
+-isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/torch/csrc/api/include \
+-isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/TH \
+-isystem /home/pedro/anaconda3/envs/pytracking-3.8/lib/python3.8/site-packages/torch/include/THC \
+-isystem /usr/local/cuda/include -isystem /home/pedro/anaconda3/envs/pytracking-3.8/include/python3.8 \
+-D_GLIBCXX_USE_CXX11_ABI=1 \
+-D__CUDA_NO_HALF_OPERATORS__ \
+-D__CUDA_NO_HALF_CONVERSIONS__ \
+-D__CUDA_NO_BFLOAT16_CONVERSIONS__ \
+-D__CUDA_NO_HALF2_OPERATORS__ \
+--expt-relaxed-constexpr \
+-gencode=arch=compute_87,code=compute_87 \
+-gencode=arch=compute_87,code=sm_87 \
+--compiler-options '-fPIC' \
+-std=c++17 \
+-c /home/pedro/Pytracking-Jetson-ssh/ltr/external/PreciseRoIPooling/pytorch/prroi_pool/src/prroi_pooling_gpu_impl.cu \
+-o prroi_pooling_gpu_impl.cuda.o

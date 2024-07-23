@@ -26,7 +26,6 @@ def remap_object_ids(init_info):
 
 
 class TaMOs(BaseTracker):
-
     multiobj_mode = os.environ.get('MULTIOBJ_MODE', 'default')
 
     def initialize_features(self):
