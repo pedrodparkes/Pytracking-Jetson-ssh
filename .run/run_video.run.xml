@@ -4,9 +4,9 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="false" />
     <envs>
-      <env name="DISPLAY" value="pedro:11.0" />
-      <env name="MAX_JOBS" value="4" />
       <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="DISPLAY" value="pedro:10.0" />
+      <env name="MAX_JOBS" value="4" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />

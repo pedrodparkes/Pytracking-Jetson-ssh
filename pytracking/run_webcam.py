@@ -9,7 +9,7 @@ if env_path not in sys.path:
 from pytracking.evaluation import Tracker
 
 
-def run_webcam(tracker_name, tracker_param, debug=None, visdom_info=None):
+def run_webcam(tracker_name, tracker_param, optional_box=None, debug=None, visdom_info=None):
     """Run the tracker on your webcam.
     args:
         tracker_name: Name of tracking method.
@@ -19,7 +19,7 @@ def run_webcam(tracker_name, tracker_param, debug=None, visdom_info=None):
     """
     visdom_info = {} if visdom_info is None else visdom_info
     tracker = Tracker(tracker_name, tracker_param)
-    tracker.run_video_generic(debug=debug, visdom_info=visdom_info)
+    tracker.run_video_generic(optional_box=optional_box, debug=debug, visdom_info=visdom_info)
 
 
 def main():
@@ -27,6 +27,7 @@ def main():
     parser.add_argument('tracker_name', type=str, help='Name of tracking method.')
     parser.add_argument('tracker_param', type=str, help='Name of parameter file.')
     parser.add_argument('--debug', type=int, default=0, help='Debug level.')
+    parser.add_argument('--optional_box', type=float, default=None, nargs="+", help='optional_box with format x y w h.')
     parser.add_argument('--use_visdom', type=bool, default=True, help='Flag to enable visdom')
     parser.add_argument('--visdom_server', type=str, default='127.0.0.1', help='Server for visdom')
     parser.add_argument('--visdom_port', type=int, default=8097, help='Port for visdom')
@@ -34,7 +35,7 @@ def main():
     args = parser.parse_args()
 
     visdom_info = {'use_visdom': args.use_visdom, 'server': args.visdom_server, 'port': args.visdom_port}
-    run_webcam(args.tracker_name, args.tracker_param, args.debug, visdom_info)
+    run_webcam(args.tracker_name, args.tracker_param, args.optional_box, args.debug, visdom_info)
 
 
 if __name__ == '__main__':

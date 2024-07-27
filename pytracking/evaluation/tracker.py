@@ -15,7 +15,6 @@ from pytracking.evaluation.multi_object_wrapper import MultiObjectWrapper
 from pathlib import Path
 import torch
 
-
 _tracker_disp_colors = {1: (0, 255, 0), 2: (0, 0, 255), 3: (255, 0, 0),
                         4: (255, 255, 255), 5: (0, 0, 0), 6: (0, 255, 128),
                         7: (123, 123, 123), 8: (255, 128, 0), 9: (128, 0, 255)}
@@ -336,6 +335,8 @@ class Tracker:
             cv.imshow(display_name, frame)
         else:
             cap = cv.VideoCapture(0)
+            ret, frame = cap.read()
+
 
 
         next_object_id = 1
