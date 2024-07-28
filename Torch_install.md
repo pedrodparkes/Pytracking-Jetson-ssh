@@ -26,3 +26,15 @@ git clone --branch v0.16.1 https://github.com/pytorch/vision torchvision
 cd torchvision
 python setup.py install
 ```
+
+6. Install pyserial
+```shell
+pip install pyserial
+sudo usermod -a -G dialout `whoami`
+sudo chmod 766 /dev/ttyUSB0
+```
+
+7. Install depthai
+```shell
+pip install depthai
+```
