@@ -17,30 +17,57 @@ import torch
 
 from pytracking.evaluation.servo_handler import Servo
 from pytracking.evaluation.pid_controller import PIDController
-# Initialize PID controller
-# Example usage:
-horizontal_fov = 34.50063232000597  # degrees
-vertical_fov = 19.815163113581676  # degrees
-camera_width = 1280  # Width in pixels
-camera_height = 1024  # Height in pixels
-# Initialize the PID controller with camera parameters
-pid_controller = PIDController(Kp=0.1, Ki=0.01, Kd=0.05, fov_h=horizontal_fov, fov_v=vertical_fov, width=camera_width, height=camera_height)
+from pytracking.evaluation.camera_intrinsics import *
 
+SerialPort = '/dev/ttyUSB0'
+ServoSendCommandInterval = 0
+SERVO_X = 1
+SERVO_Y = 0
+ZeroServoAngleX = 90
+ZeroServoAngleY = 90
+CurrServoAngleX = ZeroServoAngleX
+CurrServoAngleY = ZeroServoAngleY
 
-servo = Servo(SerialPort  = '/dev/ttyUSB0',
+servo = Servo(SerialPort  = SerialPort,
               SerialSpeed = 115200)
-interval = 0
-# Servo()
+servo.set_servo_time_ms(0, 200)
+servo.set_servo_time_ms(1, 200)
+servo.set_servo_pos(SERVO_X, ZeroServoAngleX)
+servo.set_servo_pos(SERVO_Y, ZeroServoAngleY)
 
-servo.set_servo_time_ms(0, 800)
-servo.set_servo_time_ms(1, 800)
+# Pid params
+Ki = 0.01
+Kd = 0.002
+Kp = 0.15
+dt = 0.05
 
-frame_size = (1280, 1024)
-frame_size = (1024, 1280)
-center_x = frame_size[0] / 2
-center_y = frame_size[1] / 2
+# SetCameraWidth = 1280
+# SetCameraHeight = 1024
+
+import depthai as dai
+# Create pipeline
+pipeline = dai.Pipeline()
+
+# Define source and output
+camRgb = pipeline.create(dai.node.ColorCamera)
+xoutVideo = pipeline.create(dai.node.XLinkOut)
+
+xoutVideo.setStreamName("video")
+
+# Properties
+camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
+camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_12_MP)
+# Set the image flipping properties
+camRgb.setImageOrientation(dai.CameraImageOrientation.VERTICAL_FLIP)
+# camRgb.setVideoSize(1280, 1024)
+xoutVideo.input.setBlocking(False)
+xoutVideo.input.setQueueSize(1)
+# Linking
+camRgb.video.link(xoutVideo.input)
 
 
+
+# Init tracker
 _tracker_disp_colors = {1: (0, 255, 0), 2: (0, 0, 255), 3: (255, 0, 0),
                         4: (255, 255, 255), 5: (0, 0, 0), 6: (0, 255, 128),
                         7: (123, 123, 123), 8: (255, 128, 0), 9: (128, 0, 255)}
@@ -500,8 +527,6 @@ class Tracker:
         elif event.key == 'r':
             self.reset_tracker()
             print("Resetting target pos to gt!")
-            servo.set_servo_pos(1, 90)
-            servo.set_servo_pos(0, 90)
 
     def _read_image(self, image_file: str):
         im = cv.imread(image_file)
@@ -536,29 +561,6 @@ class Tracker:
 
         # used to record the time at which we processed current frame
         new_frame_time = 0
-        import depthai as dai
-        # Create pipeline
-        pipeline = dai.Pipeline()
-        
-        # Define source and output
-        camRgb = pipeline.create(dai.node.ColorCamera)
-        xoutVideo = pipeline.create(dai.node.XLinkOut)
-        
-        xoutVideo.setStreamName("video")
-        
-        # Properties
-        camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
-        camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
-        # Set the image flipping properties
-        # camRgb.setImageOrientation(dai.CameraImageOrientation.HORIZONTAL_MIRROR)
-        camRgb.setImageOrientation(dai.CameraImageOrientation.VERTICAL_FLIP)
-        camRgb.setVideoSize(1280, 1024)
-        
-        xoutVideo.input.setBlocking(False)
-        xoutVideo.input.setQueueSize(1)
-        
-        # Linking
-        camRgb.video.link(xoutVideo.input)
 
         params = self.get_parameters()
 
@@ -627,41 +629,52 @@ class Tracker:
         # Connect to device and start pipeline
         last_print_time = time.time()
         with dai.Device(pipeline) as device:
-            # Get the calibration data
+            CurrServoAngleX = ZeroServoAngleX
+            CurrServoAngleY = ZeroServoAngleY
+            # # Get the calibration data
+            # calibData = device.readCalibration()
+            # intrinsics = calibData.getCameraIntrinsics(dai.CameraBoardSocket.RGB)
+            # 
+            # # Get the camera resolution
+            # camera_width, camera_height = camRgb.getResolutionSize()
+            # 
+            # # Calculate the FOV
+            # fx = intrinsics[0][0]
+            # fy = intrinsics[1][1]
+            # 
+            # hFov = 2 * np.arctan(camera_width / (2 * fx)) * 180 / np.pi
+            # vFov = 2 * np.arctan(camera_height / (2 * fy)) * 180 / np.pi
+            # 
+            # # print(f"Horizontal FOV: {hFov} degrees")
+            # # print(f"Vertical FOV: {vFov} degrees")
             calibData = device.readCalibration()
-            intrinsics = calibData.getCameraIntrinsics(dai.CameraBoardSocket.RGB)
-
-            # Get the camera resolution
-            width, height = camRgb.getResolutionSize()
-
-            # Calculate the FOV
-            fx = intrinsics[0][0]
-            fy = intrinsics[1][1]
-
-            hFov = 2 * np.arctan(width / (2 * fx)) * 180 / np.pi
-            vFov = 2 * np.arctan(height / (2 * fy)) * 180 / np.pi
-
-            print(f"Horizontal FOV: {hFov} degrees")
-            print(f"Vertical FOV: {vFov} degrees")
+            cameras = device.getConnectedCameras()
+            alpha = 1
+            M, camera_width, camera_height = calibData.getDefaultIntrinsics(cameras[0])
+            M = np.array(M)
+            d = np.array(calibData.getDistortionCoefficients(cameras[0]))
+    
+            hFov = getHFov(M, camera_width)
+            vFov = getHFov(M, camera_height)
+            dFov = getDFov(M, camera_width, camera_height)
+    
+            print("\nFOV measurement from calib (e.g. after undistortion):")
+            print(f"{cameras[0]}, {camera_width}x{camera_height}")
+            print(f"Horizontal FOV: {hFov}")
+            print(f"Vertical FOV: {vFov}")
+            print(f"Diagonal FOV: {dFov}")
 
             # Calculate angle per pixel
-            alpha_x = hFov / width      # degrees per pixel
-            alpha_y = vFov / height     # degrees per pixel
-
-            # time.sleep(1)
+            alpha_x = hFov / camera_width      # degrees per pixel
+            alpha_y = vFov / camera_height     # degrees per pixel
+            print(f"Image: {camera_width}x{camera_height}, hFOV: {hFov}, vFOV: {vFov}, AnglePpx: {alpha_x}, {alpha_y}")
+            pid_controller = PIDController(Kp=Kp, Ki=Ki, Kd=Kd)
 
             video = device.getOutputQueue(name="video", maxSize=1, blocking=False)
 
-            if videofilepath is not None:
-                assert os.path.isfile(videofilepath), "Invalid param {}".format(videofilepath)
-                ", videofilepath must be a valid videofile"
-                cap = cv.VideoCapture(videofilepath)
-                ret, frame = cap.read()
-                frame_number += 1
-                cv.imshow(display_name, frame)
-            else:
-                videoIn = video.get()
-                frame = videoIn.getCvFrame()
+            videoIn = video.get()
+            frame = videoIn.getCvFrame()
+            print(f"Got image with Shape: {frame.shape}")
 
             next_object_id = 1
             sequence_object_ids = []
@@ -698,7 +711,8 @@ class Tracker:
                         break
 
                 frame_disp = frame.copy()
-
+                frame_center = self.get_frame_center(frame_disp)
+                cv.circle(frame_disp, frame_center, 3, (0, 127,255), 3)
                 info = OrderedDict()
                 info['previous_output'] = prev_output
 
@@ -750,25 +764,41 @@ class Tracker:
                             cv.circle(frame_disp, frame_center, 3, (100, 127,255), 3)
                             # Calculate error
                             error_x, error_y = self.calculate_error(bbox_center, frame_center)
-                            # print(f"{error_x}, {error_y}")
+                            error_y = -1 * error_y
+                            # if error_x < 40:
+                            #     error_x = 0
+                            # if error_y < 40:
+                            #     error_y = 0
 
                             # Compute control commands
-                            dt = 0.1  # Time step, adjust as needed
-                            # control_x, control_y = pid.compute(error_x, error_y, dt)
-                            servo_angle_x, servo_angle_y = pid_controller.compute(error_x, error_y, dt)
-                            print(f"{servo_angle_x}, {servo_angle_y}")
+                            # servo_angle_x, servo_angle_y = pid_controller.compute(error_x, error_y, dt)
+                            # servo_angle_x = pid_controller.compute(error_x, error_y, dt)
+                            angle_per_pixel_x = (hFov / 2) / (camera_width / 2)
+                            angle_per_pixel_y = (vFov / 2) /(camera_height / 2)
+                            servo_angle_x = error_x * angle_per_pixel_x
+                            servo_angle_y = error_y * angle_per_pixel_y
+
+                            servo_angle_xx = pid_controller.compute(servo_angle_x, dt)
+                            servo_angle_yy = pid_controller.compute(servo_angle_y, dt)
+
+                            # print(f"AngPerPix: {angle_per_pixel_x}, {angle_per_pixel_y}, Errors: {error_x}, {error_y}, Angles: {servo_angle_x}, {servo_angle_y}")
+                            print(f"Errors: {error_x}, {error_y}, Angles: {servo_angle_x}, {servo_angle_y}")
+                            message = f"error_x: {error_x}, error_y: {error_y}, servo_angle_x: {servo_angle_x}, servo_angle_y: {servo_angle_y}"
+                            cv.putText(frame_disp, message, (10, 2100), cv.FONT_HERSHEY_COMPLEX_SMALL, 2, (255, 0, 0), 5)
                             # servo_angle_x, servo_angle_y = self.control_to_servo_angles(control_x, control_y, alpha_x, alpha_y)
                             # print(f"{servo_angle_x}, {servo_angle_y}")
                             current_time = time.time()
-                            if current_time - last_print_time >= interval:
-                                last_print_time = current_time
-                                servo.set_servo_pos(1, int(90+servo_angle_x))
-                                servo.set_servo_pos(0, int(90+servo_angle_y))
+                            # if current_time - last_print_time >= 0.01:
+                            CurrServoAngleX = CurrServoAngleX + servo_angle_xx
+                            CurrServoAngleY = CurrServoAngleY + servo_angle_yy
+                            servo.set_servo_pos(SERVO_X, int(CurrServoAngleX))
+                            servo.set_servo_pos(SERVO_Y, int(CurrServoAngleY))
+                            last_print_time = current_time
                             # # Calculate angle adjustments for pan and tilt servos
                             # angle_adjustment_x = (midpoint_int[0] - center_x) / frame_size[0] * 180  # Assuming 180 degrees pan range
                             # angle_adjustment_y = (midpoint_int[1] - center_y) / frame_size[1] * 180  # Assuming 180 degrees tilt range
                             # current_time = time.time()
-                            # if current_time - last_print_time >= interval:
+                            # if current_time - last_print_time >= ServoSendCommandInterval:
                             #     print("Print command executed")
                             #     last_print_time = current_time
                             #     print(180 - angle_adjustment_x)
@@ -824,8 +854,10 @@ class Tracker:
                     info['init_bbox'] = OrderedDict()
                     tracker.initialize(frame, info)
                     ui_control.mode = 'init'
-                    servo.set_servo_pos(1, 90)
-                    servo.set_servo_pos(0, 90)
+                    CurrServoAngleX = ZeroServoAngleX
+                    CurrServoAngleY = ZeroServoAngleY
+                    servo.set_servo_pos(SERVO_X, CurrServoAngleX)
+                    servo.set_servo_pos(SERVO_Y, CurrServoAngleY)
                 # 'Space' to pause video
                 elif key == 32 and videofilepath is not None:
                     paused = not paused

@@ -7,7 +7,6 @@ if env_path not in sys.path:
     sys.path.append(env_path)
 
 from pytracking.evaluation import Tracker
-from servo_handler import Servo
 
 
 
