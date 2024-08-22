@@ -1,3 +1,33 @@
+## Torch install on Jetson with Jetpack 6
+### Start from here:
+
+
+https://forums.developer.nvidia.com/t/pytorch-for-jetson/72048
+https://developer.download.nvidia.com/compute/redist/jp/
+```shell
+
+python3 -m pip install numpy=='1.26.1'
+python3 -m pip install --no-cache https://developer.download.nvidia.com/compute/redist/jp/v60/pytorch/torch-2.4.0a0+07cecf4168.nv24.05.14710581-cp310-cp310-linux_aarch64.whl
+```
+
+Test installation:
+```python
+import torch
+
+print(torch.__version__)
+print('CUDA available: ' + str(torch.cuda.is_available()))
+print('cuDNN version: ' + str(torch.backends.cudnn.version()))
+
+a = torch.cuda.FloatTensor(2).zero_()
+print('Tensor a = ' + str(a))
+b = torch.randn(2).cuda()
+print('Tensor b = ' + str(b))
+c = a + b
+print('Tensor c = ' + str(c))
+```
+
+
+
 Installing Torch on nVidia Jetson Orin NX 16GB
 1. Detect Jetpack version apt-cache show nvidia-jetpack —> Version: 5.1.2
 ```shell
