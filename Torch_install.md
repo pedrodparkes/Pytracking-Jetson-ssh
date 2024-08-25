@@ -68,3 +68,9 @@ sudo chmod 766 /dev/ttyUSB0
 ```shell
 pip install depthai
 ```
+
+8. Fix access to DepthAI Cam:
+```shell
+echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="03e7", MODE="0666"' | sudo tee /etc/udev/rules.d/80-movidius.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
