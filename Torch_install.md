@@ -1,5 +1,5 @@
 ## Torch install on Jetson with Jetpack 6
-### Start from here:
+### Start from here: https://github.com/AndreasKaratzas/orin
 
 
 https://forums.developer.nvidia.com/t/pytorch-for-jetson/72048
@@ -73,4 +73,21 @@ pip install depthai
 ```shell
 echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="03e7", MODE="0666"' | sudo tee /etc/udev/rules.d/80-movidius.rules
 sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+9. Build OpenCV with Cuda
+Detect and specify correct ```CUDA_ARCH_BIN```. 8.7 for Jetson Orin NX 16GB
+```shell
+nvidia-smi --query-gpu=compute_cap --format=csv
+```
+
+Set 
+```shell
+conda_env_path=~/anaconda3/envs/opencv4 
+```
+
+After building, link the so:
+```shell
+cd $conda_env_path/lib/python3.8
+ln -s /opt/opencv/build/lib/python3/cv2.cpython-38-x86_64-linux-gnu.so
 ```
